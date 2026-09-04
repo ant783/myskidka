@@ -4,3 +4,20 @@ html, body, #root {
   height: 100%;
   margin: 0;
 }
+/* Подключаем шрифты через @import (альтернатива link в HTML) */
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* Определяем переменные для Tailwind (v4) */
+@theme {
+  --font-unbounded: 'Unbounded', sans-serif;
+  --font-manrope: 'Manrope', sans-serif;
+}
+
+/* Применяем шрифты к элементам */
+body {
+  font-family: var(--font-manrope);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-unbounded);
+}
