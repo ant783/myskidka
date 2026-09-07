@@ -4,8 +4,7 @@ import {
   ThumbsUp, ThumbsDown, Milk, Wheat, Egg, Fuel, Droplet,
   LayoutGrid, Percent, Layers, Wallet, Tag, Minus, Sparkles
 } from 'lucide-react';
-
-import { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker } from '@pbe/react-yandex-maps';
+import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps';
 
 // ---------------------------------- tokens ----------------------------------
 const C = {
@@ -1233,40 +1232,27 @@ export default function GdeSkidkaPrototype() {
 
       {/* ========== Яндекс.Карты ========== */}
       <div style={{ width: '100%', height: '400px', minHeight: '300px', background: '#e8edeb' }}>
-        <YMap
-          location={{ center: [58.010, 56.250], zoom: 12 }}
-          style={{ height: '100%', width: '100%' }}
-        >
-          <YMapDefaultSchemeLayer />
-          <YMapDefaultFeaturesLayer />
-          {visiblePoints.map((p) => (
-            <YMapMarker
-              key={p.id}
-              coordinates={[p.lat, p.lng]}
-              onClick={() => setSelectedId(p.id)}
-            >
-              <div
-                style={{
-                  background: C.brand,
-                  color: '#fff',
-                  borderRadius: '50%',
-                  width: 28,
-                  height: 28,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  border: '2px solid #fff',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+        <YMaps query={{ apikey: import.meta.env.VITE_YANDEX_MAPS_API_KEY }}>
+          <Map
+            state={{ center: [58.010, 56.250], zoom: 12 }}
+            width="100%"
+            height="100%"
+          >
+            {visiblePoints.map((p) => (
+              <Placemark
+                key={p.id}
+                geometry={[p.lat, p.lng]}
+                onClick={() => setSelectedId(p.id)}
+                properties={{
+                  balloonContent: `<strong>${p.name}</strong><br/>${p.address}`
                 }}
-              >
-                {p.prices.length > 0 ? '₽' : '🔥'}
-              </div>
-            </YMapMarker>
-          ))}
-        </YMap>
+                options={{
+                  preset: 'islands#blueIcon'
+                }}
+              />
+            ))}
+          </Map>
+        </YMaps>
       </div>
 
       {/* Stats */}
