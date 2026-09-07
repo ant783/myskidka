@@ -1,21 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  MapPin, Plus, X, Check, Camera, ChevronDown, Share2,
-  Locate, ZoomIn, ZoomOut, Clock, ShieldCheck, ThumbsUp,
-  ThumbsDown, Milk, Wheat, Egg, Fuel, Droplet, LayoutGrid,
-  Percent, Layers, Wallet, Tag, Minus, Compass, Sparkles
+  Plus, X, Check, Camera, ChevronDown, Share2,
+  ThumbsUp, ThumbsDown, Milk, Wheat, Egg, Fuel, Droplet,
+  LayoutGrid, Percent, Layers, Wallet, Tag, Minus, Sparkles
 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
-// Исправление иконок Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+import { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker } from '@pbe/react-yandex-maps';
 
 // ---------------------------------- tokens ----------------------------------
 const C = {
@@ -57,7 +47,6 @@ const PROMO_CATS = [
 
 const TYPE_LABEL = { shop: "Магазин", gas: "АЗС", cafe: "Кафе" };
 
-// Точки с реальными координатами (примерные для Перми)
 const PERM_CITY_POINTS = [
   {
     id: 1,
@@ -359,42 +348,6 @@ function Chip({ active, onClick, icon: Icon, label }) {
       {Icon && <Icon size={14} />}
       {label}
     </button>
-  );
-}
-
-function Pill({ children, tone = "brand" }) {
-  const bg =
-    tone === "brand"
-      ? C.brandSoft
-      : tone === "amber"
-      ? C.amberSoft
-      : tone === "coral"
-      ? C.coralSoft
-      : C.greySoft;
-  const fg =
-    tone === "brand"
-      ? C.brandDark
-      : tone === "amber"
-      ? "#8A5C10"
-      : tone === "coral"
-      ? "#A5342B"
-      : C.inkSoft;
-  return (
-    <span
-      style={{
-        background: bg,
-        color: fg,
-        padding: "2px 10px",
-        borderRadius: 30,
-        fontSize: 11,
-        fontWeight: 600,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-      }}
-    >
-      {children}
-    </span>
   );
 }
 
@@ -1278,49 +1231,42 @@ export default function GdeSkidkaPrototype() {
         ))}
       </div>
 
-      {/* ========== КАРТА ========== */}
+      {/* ========== Яндекс.Карты ========== */}
       <div style={{ width: '100%', height: '400px', minHeight: '300px', background: '#e8edeb' }}>
-        <MapContainer
-          center={[58.010, 56.250]}
-          zoom={12}
+        <YMap
+          location={{ center: [58.010, 56.250], zoom: 12 }}
           style={{ height: '100%', width: '100%' }}
-          zoomControl={true}
         >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+          <YMapDefaultSchemeLayer />
+          <YMapDefaultFeaturesLayer />
           {visiblePoints.map((p) => (
-            <Marker
+            <YMapMarker
               key={p.id}
-              position={[p.lat, p.lng]}
-              eventHandlers={{
-                click: () => setSelectedId(p.id),
-              }}
+              coordinates={[p.lat, p.lng]}
+              onClick={() => setSelectedId(p.id)}
             >
-              <Popup>
-                <div>
-                  <strong>{p.name}</strong><br />
-                  {p.address}<br />
-                  <button
-                    onClick={() => setSelectedId(p.id)}
-                    style={{
-                      marginTop: 6,
-                      padding: '4px 12px',
-                      background: C.brand,
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 20,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Подробнее
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
+              <div
+                style={{
+                  background: C.brand,
+                  color: '#fff',
+                  borderRadius: '50%',
+                  width: 28,
+                  height: 28,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: '2px solid #fff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                }}
+              >
+                {p.prices.length > 0 ? '₽' : '🔥'}
+              </div>
+            </YMapMarker>
           ))}
-        </MapContainer>
+        </YMap>
       </div>
 
       {/* Stats */}
