@@ -1,10 +1,21 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 import {
   MapPin, Plus, X, Check, Camera, ChevronDown, Share2,
   Locate, ZoomIn, ZoomOut, Clock, ShieldCheck, ThumbsUp,
   ThumbsDown, Milk, Wheat, Egg, Fuel, Droplet, LayoutGrid,
   Percent, Layers, Wallet, Tag, Minus, Compass, Sparkles
-} from "lucide-react";
+} from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Исправление иконок Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 // ---------------------------------- tokens ----------------------------------
 const C = {
@@ -46,7 +57,7 @@ const PROMO_CATS = [
 
 const TYPE_LABEL = { shop: "Магазин", gas: "АЗС", cafe: "Кафе" };
 
-// Точки по городу Пермь
+// Точки с реальными координатами (примерные для Перми)
 const PERM_CITY_POINTS = [
   {
     id: 1,
@@ -54,8 +65,8 @@ const PERM_CITY_POINTS = [
     brand: "Пятёрочка",
     type: "shop",
     address: "Комсомольский пр-т, 40",
-    x: 27,
-    y: 34,
+    lat: 58.006,
+    lng: 56.237,
     prices: [
       { id: "p1", cat: "milk", value: 88, unit: "л", mins: 12, confirms: 6, status: "active" },
       { id: "p2", cat: "bread", value: 44, unit: "шт", mins: 40, confirms: 3, status: "active" },
@@ -71,8 +82,8 @@ const PERM_CITY_POINTS = [
     brand: "Семья",
     type: "shop",
     address: "ул. Ленина, 15",
-    x: 53,
-    y: 21,
+    lat: 58.017,
+    lng: 56.258,
     prices: [
       { id: "p4", cat: "milk", value: 91, unit: "л", mins: 55, confirms: 4, status: "active" },
       { id: "p5", cat: "bread", value: 40, unit: "шт", mins: 200, confirms: 2, status: "active" },
@@ -88,8 +99,8 @@ const PERM_CITY_POINTS = [
     brand: "Лукойл",
     type: "gas",
     address: "Шоссе Космонавтов, 100",
-    x: 71,
-    y: 56,
+    lat: 58.035,
+    lng: 56.275,
     prices: [
       { id: "p7", cat: "fuel", value: 58.9, unit: "л", mins: 5, confirms: 11, status: "active" },
     ],
@@ -101,8 +112,8 @@ const PERM_CITY_POINTS = [
     brand: "Виват",
     type: "shop",
     address: "ул. Куйбышева, 95",
-    x: 17,
-    y: 61,
+    lat: 58.009,
+    lng: 56.220,
     prices: [
       { id: "p8", cat: "milk", value: 84, unit: "л", mins: 8, confirms: 8, status: "active" },
       { id: "p9", cat: "bread", value: 38, unit: "шт", mins: 15, confirms: 5, status: "active" },
@@ -118,8 +129,8 @@ const PERM_CITY_POINTS = [
     brand: "Газпромнефть",
     type: "gas",
     address: "ул. Героев Хасана, 105",
-    x: 83,
-    y: 31,
+    lat: 58.027,
+    lng: 56.280,
     prices: [
       { id: "p11", cat: "fuel", value: 60.4, unit: "л", mins: 33, confirms: 5, status: "active" },
     ],
@@ -131,8 +142,8 @@ const PERM_CITY_POINTS = [
     brand: "Кафе",
     type: "cafe",
     address: "ул. Ленина, 45",
-    x: 41,
-    y: 71,
+    lat: 58.013,
+    lng: 56.245,
     prices: [],
     promos: [
       { id: "m4", cat: "twoforone", title: "2 кофе по цене одного до 12:00", value: "2=1", until: "сегодня", mins: 9, confirms: 4, status: "active" },
@@ -144,8 +155,8 @@ const PERM_CITY_POINTS = [
     brand: "Добрыня",
     type: "shop",
     address: "ул. Крисанова, 12",
-    x: 63,
-    y: 76,
+    lat: 58.022,
+    lng: 56.267,
     prices: [
       { id: "p12", cat: "milk", value: 93, unit: "л", mins: 320, confirms: 1, status: "active" },
       { id: "p13", cat: "bread", value: 45, unit: "шт", mins: 260, confirms: 1, status: "active" },
@@ -154,7 +165,6 @@ const PERM_CITY_POINTS = [
   },
 ];
 
-// Точки по Пермскому краю
 const PERM_KRAI_POINTS = [
   {
     id: 101,
@@ -162,8 +172,8 @@ const PERM_KRAI_POINTS = [
     brand: "Магнит",
     type: "shop",
     address: "г. Краснокамск, ул. Победы, 3",
-    x: 22,
-    y: 26,
+    lat: 58.082,
+    lng: 55.755,
     prices: [
       { id: "k1", cat: "milk", value: 90, unit: "л", mins: 40, confirms: 4, status: "active" },
       { id: "k2", cat: "bread", value: 42, unit: "шт", mins: 100, confirms: 2, status: "active" },
@@ -176,8 +186,8 @@ const PERM_KRAI_POINTS = [
     brand: "Лукойл",
     type: "gas",
     address: "а/д Пермь–Березники, 48 км",
-    x: 58,
-    y: 40,
+    lat: 58.150,
+    lng: 56.000,
     prices: [
       { id: "k3", cat: "fuel", value: 59.5, unit: "л", mins: 20, confirms: 7, status: "active" },
     ],
@@ -189,8 +199,8 @@ const PERM_KRAI_POINTS = [
     brand: "Пятёрочка",
     type: "shop",
     address: "г. Чайковский, ул. Ленина, 22",
-    x: 74,
-    y: 66,
+    lat: 56.778,
+    lng: 54.114,
     prices: [
       { id: "k4", cat: "milk", value: 87, unit: "л", mins: 15, confirms: 5, status: "active" },
     ],
@@ -204,8 +214,8 @@ const PERM_KRAI_POINTS = [
     brand: "Кунгурский",
     type: "shop",
     address: "г. Кунгур, ул. Свободы, 8",
-    x: 30,
-    y: 72,
+    lat: 57.428,
+    lng: 56.959,
     prices: [
       { id: "k6", cat: "eggs", value: 110, unit: "10 шт", mins: 200, confirms: 2, status: "active" },
     ],
@@ -217,8 +227,8 @@ const PERM_KRAI_POINTS = [
     brand: "Роснефть",
     type: "gas",
     address: "а/д Пермь–Кунгур, 15 км",
-    x: 45,
-    y: 18,
+    lat: 57.850,
+    lng: 56.500,
     prices: [
       { id: "k7", cat: "fuel", value: 60.9, unit: "л", mins: 60, confirms: 4, status: "active" },
     ],
@@ -388,106 +398,6 @@ function Pill({ children, tone = "brand" }) {
   );
 }
 
-function MapBackground() {
-  return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {[...Array(7)].map((_, i) => (
-        <div
-          key={`h-${i}`}
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: `${(i + 1) * 12.5}%`,
-            height: 1,
-            background: C.line,
-            opacity: 0.4,
-          }}
-        />
-      ))}
-      {[...Array(8)].map((_, i) => (
-        <div
-          key={`v-${i}`}
-          style={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: `${(i + 1) * 12.5}%`,
-            width: 1,
-            background: C.line,
-            opacity: 0.4,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function Pin({ point, tone, active, onClick }) {
-  const hex = TONE_HEX[tone] || C.grey;
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        position: "absolute",
-        left: `${point.x}%`,
-        top: `${point.y}%`,
-        transform: "translate(-50%, -50%)",
-        cursor: "pointer",
-        zIndex: active ? 10 : 2,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 2,
-        transition: "transform 0.15s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.15)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translate(-50%, -50%) scale(1)";
-      }}
-    >
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          background: hex,
-          border: `2px solid ${C.surface}`,
-          boxShadow: "0 3px 12px rgba(0,0,0,0.18)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#fff",
-          fontSize: 14,
-          fontWeight: 700,
-        }}
-      >
-        {tone === "coral" ? "↑" : tone === "brand" ? "↓" : "•"}
-      </div>
-      <div
-        style={{
-          fontSize: 9,
-          fontWeight: 600,
-          background: "rgba(0,0,0,0.7)",
-          backdropFilter: "blur(4px)",
-          color: "#fff",
-          padding: "2px 8px",
-          borderRadius: 10,
-          whiteSpace: "nowrap",
-          maxWidth: 80,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        {point.name}
-      </div>
-    </div>
-  );
-}
-
 function PointSheet({ point, mode, onClose, onConfirm, onReport, onAddHere }) {
   if (!point) return null;
   const priceItems = point.prices;
@@ -508,7 +418,6 @@ function PointSheet({ point, mode, onClose, onConfirm, onReport, onAddHere }) {
         boxShadow: "0 -8px 40px rgba(0,0,0,0.12)",
       }}
     >
-      {/* Header */}
       <div
         style={{
           padding: "18px 20px 12px 20px",
@@ -541,7 +450,6 @@ function PointSheet({ point, mode, onClose, onConfirm, onReport, onAddHere }) {
         </button>
       </div>
 
-      {/* Content */}
       <div style={{ padding: "16px 20px 20px 20px", overflowY: "auto", flex: 1 }}>
         {priceItems.length > 0 && (
           <div style={{ marginBottom: 20 }}>
@@ -807,7 +715,6 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
           boxShadow: "0 -8px 40px rgba(0,0,0,0.12)",
         }}
       >
-        {/* Header */}
         <div
           style={{
             padding: "18px 20px 12px 20px",
@@ -835,7 +742,6 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
           </button>
         </div>
 
-        {/* Content */}
         <div style={{ padding: "16px 20px 20px 20px", overflowY: "auto", flex: 1 }}>
           {step === "pick" && (
             <div>
@@ -1372,64 +1278,49 @@ export default function GdeSkidkaPrototype() {
         ))}
       </div>
 
-      {/* Map */}
-      <div
-        style={{
-          position: "relative",
-          margin: "12px 20px",
-          borderRadius: 20,
-          overflow: "hidden",
-          background: C.page,
-          height: 280,
-          border: `1px solid ${C.line}`,
-          flexShrink: 0,
-        }}
-      >
-        <MapBackground />
-        {visiblePoints.map((p) => {
-          const tone = pinTone(p, mode, category, cityPoints);
-          if (!tone) return null;
-          return (
-            <Pin
-              key={p.id}
-              point={p}
-              tone={tone}
-              active={selectedId === p.id}
-              onClick={() => setSelectedId(p.id)}
-            />
-          );
-        })}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 12,
-            left: 12,
-            display: "flex",
-            gap: 14,
-            background: "rgba(255,255,255,0.85)",
-            backdropFilter: "blur(8px)",
-            padding: "6px 14px",
-            borderRadius: 30,
-            fontSize: 11,
-            fontWeight: 500,
-            border: "1px solid rgba(255,255,255,0.3)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            zIndex: 5,
-          }}
+      {/* ========== НОВАЯ КАРТА НА ВСЮ ШИРИНУ ========== */}
+      <div style={{ width: '100%', height: '400px', minHeight: '300px', background: '#e8edeb' }}>
+        <MapContainer
+          center={[58.010, 56.250]}
+          zoom={12}
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={true}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 14, height: 14, borderRadius: "50%", background: C.brand }} />
-            Низкая цена
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 14, height: 14, borderRadius: "50%", background: C.amber }} />
-            Средняя
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 14, height: 14, borderRadius: "50%", background: C.coral }} />
-            Высокая
-          </span>
-        </div>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {visiblePoints.map((p) => (
+            <Marker
+              key={p.id}
+              position={[p.lat, p.lng]}
+              eventHandlers={{
+                click: () => setSelectedId(p.id),
+              }}
+            >
+              <Popup>
+                <div>
+                  <strong>{p.name}</strong><br />
+                  {p.address}<br />
+                  <button
+                    onClick={() => setSelectedId(p.id)}
+                    style={{
+                      marginTop: 6,
+                      padding: '4px 12px',
+                      background: C.brand,
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 20,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Подробнее
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
       </div>
 
       {/* Stats */}
@@ -1438,7 +1329,7 @@ export default function GdeSkidkaPrototype() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "0 20px 8px 20px",
+          padding: "8px 20px 4px 20px",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
