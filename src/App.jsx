@@ -4,6 +4,7 @@ import {
   ThumbsUp, ThumbsDown, Milk, Wheat, Egg, Fuel, Droplet,
   LayoutGrid, Percent, Layers, Wallet, Tag, Minus, Sparkles
 } from 'lucide-react';
+// Правильный импорт для @pbe/react-yandex-maps
 import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps';
 
 // ---------------------------------- tokens ----------------------------------
@@ -1230,8 +1231,8 @@ export default function GdeSkidkaPrototype() {
         ))}
       </div>
 
-      {/* ========== Яндекс.Карты ========== */}
-      <div style={{ width: '100%', height: '400px', minHeight: '300px', background: '#e8edeb' }}>
+      {/* ========== Яндекс.Карты (адаптивная) ========== */}
+      <div style={{ width: '100%', height: '50vh', minHeight: '300px', maxHeight: '600px', background: '#e8edeb' }}>
         <YMaps query={{ apikey: import.meta.env.VITE_YANDEX_MAPS_API_KEY }}>
           <Map
             state={{ center: [58.010, 56.250], zoom: 12 }}
