@@ -4,7 +4,17 @@ import {
   ThumbsUp, ThumbsDown, Milk, Wheat, Egg, Fuel, Droplet,
   LayoutGrid, Percent, Layers, Wallet, Tag, Minus, Sparkles
 } from 'lucide-react';
-import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Исправление иконок Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 // ---------------------------------- Неоновая тёмная тема ----------------------------------
 const C = {
@@ -49,35 +59,30 @@ const PROMO_CATS = [
 
 const TYPE_LABEL = { shop: "Магазин", gas: "АЗС", cafe: "Кафе" };
 
-// ----- Функция для генерации случайных цен с небольшим разбросом -----
+// ----- Функция для генерации случайных цен -----
 const generatePrice = (base, variation = 0.05) => {
   const delta = base * variation * (Math.random() * 2 - 1);
   return Math.round((base + delta) * 10) / 10;
 };
 
-// ----- Список социально значимых продуктов (название, категория, базовая цена) -----
+// ----- Список социально значимых продуктов -----
 const SOCIAL_PRODUCTS = [
-  // Мясо и рыба
   { name: "Говядина", cat: "meat", basePrice: 600, unit: "кг" },
   { name: "Свинина", cat: "meat", basePrice: 350, unit: "кг" },
   { name: "Баранина", cat: "meat", basePrice: 500, unit: "кг" },
   { name: "Куры (целые)", cat: "meat", basePrice: 250, unit: "кг" },
   { name: "Рыба мороженая неразделанная", cat: "fish", basePrice: 200, unit: "кг" },
-  // Молочные продукты
   { name: "Молоко питьевое", cat: "milk", basePrice: 80, unit: "л" },
   { name: "Масло сливочное", cat: "milk", basePrice: 150, unit: "180г" },
   { name: "Яйца куриные", cat: "eggs", basePrice: 120, unit: "10 шт" },
-  // Хлеб
   { name: "Хлеб ржаной", cat: "bread", basePrice: 50, unit: "шт" },
   { name: "Хлеб пшеничный", cat: "bread", basePrice: 45, unit: "шт" },
   { name: "Булочные изделия из пшеничной муки", cat: "bread", basePrice: 40, unit: "шт" },
-  // Овощи и фрукты
   { name: "Картофель", cat: "veg", basePrice: 40, unit: "кг" },
   { name: "Капуста белокочанная", cat: "veg", basePrice: 30, unit: "кг" },
   { name: "Лук репчатый", cat: "veg", basePrice: 30, unit: "кг" },
   { name: "Морковь", cat: "veg", basePrice: 35, unit: "кг" },
   { name: "Яблоки", cat: "fruit", basePrice: 80, unit: "кг" },
-  // Бакалея
   { name: "Сахар-песок", cat: "groceries", basePrice: 60, unit: "кг" },
   { name: "Соль поваренная пищевая", cat: "groceries", basePrice: 15, unit: "кг" },
   { name: "Мука пшеничная", cat: "groceries", basePrice: 50, unit: "кг" },
@@ -89,13 +94,12 @@ const SOCIAL_PRODUCTS = [
   { name: "Чай чёрный байховый", cat: "groceries", basePrice: 80, unit: "пачка" },
 ];
 
-// ----- Генерация цен для одного магазина с уникальными значениями -----
+// ----- Генерация цен для магазина -----
 const generatePricesForStore = () => {
   return SOCIAL_PRODUCTS.map((p, index) => {
     const price = generatePrice(p.basePrice);
-    // Для демонстрации: у некоторых товаров добавим старую цену (скидку)
     let oldPrice = null;
-    if (index % 5 === 0) { // каждый пятый товар со скидкой
+    if (index % 5 === 0) {
       oldPrice = Math.round((price * (1 + Math.random() * 0.3)) * 10) / 10;
     }
     return {
@@ -340,10 +344,684 @@ const TONE_HEX = {
   grey: C.grey,
 };
 
-// ---------------------------------- компоненты (без изменений) ----------------------------------
-// ... (все компоненты: IconCircleButton, Chip, PointSheet, AddMarkModal — они остаются как в предыдущей версии)
-// Чтобы не раздувать ответ, я их не копирую, но они должны быть идентичны предыдущему коду.
-// В финальном коде они будут присутствовать.
+// ---------------------------------- компоненты ----------------------------------
+function IconCircleButton({ onClick, children, size = 38, title }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: C.surface,
+        border: `1px solid ${C.line}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        color: C.ink,
+        transition: "background 0.15s, box-shadow 0.15s",
+        boxShadow: "0 0 8px rgba(0,212,255,0.1)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = C.brandSoft;
+        e.currentTarget.style.boxShadow = "0 0 20px rgba(0,212,255,0.3)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = C.surface;
+        e.currentTarget.style.boxShadow = "0 0 8px rgba(0,212,255,0.1)";
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Chip({ active, onClick, icon: Icon, label }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "6px 14px",
+        borderRadius: 30,
+        border: `1.5px solid ${active ? C.brand : C.line}`,
+        background: active ? C.brandSoft : "transparent",
+        color: active ? C.brand : C.inkSoft,
+        fontFamily: "Manrope, sans-serif",
+        fontWeight: 600,
+        fontSize: 12,
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        cursor: "pointer",
+        transition: "all 0.15s, box-shadow 0.15s",
+        whiteSpace: "nowrap",
+        boxShadow: active ? "0 0 20px rgba(0,212,255,0.2)" : "none",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.borderColor = C.brand;
+          e.currentTarget.style.color = C.brand;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.borderColor = C.line;
+          e.currentTarget.style.color = C.inkSoft;
+        }
+      }}
+    >
+      {Icon && <Icon size={14} />}
+      {label}
+    </button>
+  );
+}
+
+function PointSheet({ point, mode, onClose, onConfirm, onReport, onAddHere }) {
+  if (!point) return null;
+  const priceItems = point.prices;
+  const promoItems = point.promos;
+
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        maxWidth: 420,
+        borderRadius: "24px 24px 0 0",
+        overflow: "hidden",
+        background: C.surface,
+        maxHeight: "84vh",
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: "0 -8px 40px rgba(0,212,255,0.15)",
+        borderTop: `1px solid ${C.brand}`,
+      }}
+    >
+      <div
+        style={{
+          padding: "18px 20px 12px 20px",
+          borderBottom: `1px solid ${C.line}`,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
+        <div>
+          <div style={{ fontFamily: "Unbounded, sans-serif", fontWeight: 700, fontSize: 18, color: C.brand }}>
+            {point.name}
+          </div>
+          <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2 }}>
+            {TYPE_LABEL[point.type]} · {point.address}
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            background: "none",
+            border: "none",
+            fontSize: 24,
+            cursor: "pointer",
+            color: C.inkSoft,
+            padding: "0 4px",
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      <div style={{ padding: "16px 20px 20px 20px", overflowY: "auto", flex: 1 }}>
+        {priceItems.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: C.brand, marginBottom: 10 }}>
+              Цены по отметкам покупателей
+            </div>
+            {priceItems.map((it) => {
+              const Icon = catIcon(PRICE_CATS, it.cat);
+              const stale = it.mins > 180;
+              return (
+                <div
+                  key={it.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    background: stale ? C.greySoft : "transparent",
+                    borderBottom: `1px solid ${C.line}`,
+                  }}
+                >
+                  <Icon size={18} color={C.inkSoft} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: C.ink }}>
+                      {catLabel(PRICE_CATS, it.cat)}
+                    </div>
+                    <div style={{ fontSize: 11, color: C.inkFaint }}>
+                      {timeAgo(it.mins)} · {confidencePct(it.confirms)}% достоверности
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: C.ink }}>
+                    {it.value}₽ /{it.unit}
+                  </div>
+                  {it.status !== "reported" && (
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button
+                        onClick={() => onConfirm(point.id, "prices", it.id)}
+                        title="Подтвердить"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: C.brand,
+                          padding: 4,
+                        }}
+                      >
+                        <ThumbsUp size={16} />
+                      </button>
+                      <button
+                        onClick={() => onReport(point.id, "prices", it.id)}
+                        title="Неактуально"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: C.inkFaint,
+                          padding: 4,
+                        }}
+                      >
+                        <ThumbsDown size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {promoItems.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: C.brand, marginBottom: 10 }}>
+              Акции и скидки
+            </div>
+            {promoItems.map((it) => {
+              const Icon = catIcon(PROMO_CATS, it.cat);
+              return (
+                <div
+                  key={it.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    background: C.amberSoft,
+                    borderBottom: `1px solid ${C.line}`,
+                  }}
+                >
+                  <Icon size={18} color={C.amber} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: C.ink }}>
+                      {it.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: C.inkFaint }}>
+                      {timeAgo(it.mins)} · {it.until} · {confidencePct(it.confirms)}%
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: C.coral }}>
+                    {it.value}
+                  </div>
+                  {it.status !== "reported" && (
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button
+                        onClick={() => onConfirm(point.id, "promos", it.id)}
+                        title="Подтвердить"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: C.brand,
+                          padding: 4,
+                        }}
+                      >
+                        <ThumbsUp size={16} />
+                      </button>
+                      <button
+                        onClick={() => onReport(point.id, "promos", it.id)}
+                        title="Неактуально"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: C.inkFaint,
+                          padding: 4,
+                        }}
+                      >
+                        <ThumbsDown size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {priceItems.length === 0 && promoItems.length === 0 && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "30px 20px",
+              color: C.inkSoft,
+              background: C.greySoft,
+              borderRadius: 16,
+            }}
+          >
+            <div style={{ fontSize: 14 }}>
+              Пока никто не отмечал {mode === "prices" ? "цены" : "акции"} в этой точке.
+            </div>
+            <div style={{ fontSize: 13, marginTop: 4 }}>Станьте первым!</div>
+          </div>
+        )}
+
+        <button
+          onClick={() => onAddHere(point.id)}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "14px 0",
+            borderRadius: 16,
+            background: C.brand,
+            color: "#fff",
+            border: "none",
+            fontFamily: "Manrope, sans-serif",
+            fontWeight: 700,
+            fontSize: 14.5,
+            cursor: "pointer",
+            marginTop: 12,
+            transition: "opacity 0.15s, box-shadow 0.15s",
+            boxShadow: "0 0 20px rgba(0,212,255,0.3)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = 0.85;
+            e.currentTarget.style.boxShadow = "0 0 40px rgba(0,212,255,0.5)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = 1;
+            e.currentTarget.style.boxShadow = "0 0 20px rgba(0,212,255,0.3)";
+          }}
+        >
+          {mode === "prices" ? "Отметить цену здесь" : "Добавить акцию здесь"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
+  const [step, setStep] = useState(pointId ? "form" : "pick");
+  const [pickedId, setPickedId] = useState(pointId);
+  const [product, setProduct] = useState(mode === "prices" ? "milk" : "percent");
+  const [price, setPrice] = useState(89);
+  const [title, setTitle] = useState("");
+  const [discount, setDiscount] = useState("−15%");
+  const [until, setUntil] = useState("неделя");
+  const [photo, setPhoto] = useState(false);
+
+  const point = points.find((p) => p.id === pickedId);
+  const cats = mode === "prices"
+    ? PRICE_CATS.filter((c) => c.id !== "all")
+    : PROMO_CATS.filter((c) => c.id !== "all");
+
+  function handlePick(id) {
+    setPickedId(id);
+    setStep("form");
+  }
+
+  function handleSubmit() {
+    if (mode === "prices") {
+      onSubmit(pickedId, {
+        type: "prices",
+        entry: {
+          id: "new" + Date.now(),
+          cat: product,
+          value: Number(price),
+          unit: cats.find((c) => c.id === product)?.unit || "",
+          mins: 0,
+          confirms: 1,
+          status: "active",
+        },
+      });
+    } else {
+      onSubmit(pickedId, {
+        type: "promos",
+        entry: {
+          id: "new" + Date.now(),
+          cat: product,
+          title: title || `Акция: ${catLabel(PROMO_CATS, product)}`,
+          value: discount,
+          until: `через ${until}`,
+          mins: 0,
+          confirms: 1,
+          status: "active",
+        },
+      });
+    }
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.7)",
+        backdropFilter: "blur(6px)",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        zIndex: 100,
+        padding: 20,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 420,
+          borderRadius: "24px 24px 0 0",
+          overflow: "hidden",
+          background: C.surface,
+          maxHeight: "88vh",
+          display: "flex",
+          flexDirection: "column",
+          boxShadow: "0 -8px 40px rgba(0,212,255,0.15)",
+          borderTop: `1px solid ${C.brand}`,
+        }}
+      >
+        <div
+          style={{
+            padding: "18px 20px 12px 20px",
+            borderBottom: `1px solid ${C.line}`,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div style={{ fontFamily: "Unbounded, sans-serif", fontWeight: 700, fontSize: 18, color: C.brand }}>
+            {mode === "prices" ? "Отметить цену" : "Добавить акцию"}
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              fontSize: 24,
+              cursor: "pointer",
+              color: C.inkSoft,
+              padding: "0 4px",
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{ padding: "16px 20px 20px 20px", overflowY: "auto", flex: 1 }}>
+          {step === "pick" && (
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 12 }}>
+                Наведите на точку, где вы находитесь:
+              </div>
+              {points.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => handlePick(p.id)}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: 2,
+                    padding: "12px 16px",
+                    width: "100%",
+                    textAlign: "left",
+                    borderRadius: 14,
+                    border: `1px solid ${C.line}`,
+                    background: "transparent",
+                    cursor: "pointer",
+                    marginBottom: 8,
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = C.greySoft)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <div style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>{p.name}</div>
+                  <div style={{ fontSize: 13, color: C.inkSoft }}>{p.address}</div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {step === "form" && (
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 15, color: C.ink, marginBottom: 12 }}>
+                {point ? point.name : "Точка не выбрана"}
+              </div>
+
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.inkSoft, marginBottom: 8 }}>
+                {mode === "prices" ? "Какой товар?" : "Тип акции"}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+                {cats.map((c) => (
+                  <Chip
+                    key={c.id}
+                    active={product === c.id}
+                    onClick={() => setProduct(c.id)}
+                    icon={c.icon}
+                    label={c.label}
+                  />
+                ))}
+              </div>
+
+              {mode === "prices" ? (
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.inkSoft, marginBottom: 6 }}>
+                    Цена, ₽
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button
+                      onClick={() => setPrice((v) => Math.max(1, v - 1))}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        background: C.greySoft,
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: 20,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: C.ink,
+                      }}
+                    >
+                      <Minus size={18} />
+                    </button>
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(Number(e.target.value))}
+                      style={{
+                        width: 90,
+                        textAlign: "center",
+                        fontFamily: "Unbounded, sans-serif",
+                        fontWeight: 700,
+                        fontSize: 22,
+                        border: `1px solid ${C.line}`,
+                        borderRadius: 12,
+                        padding: "8px 0",
+                        color: C.ink,
+                        outline: "none",
+                        background: C.bg,
+                      }}
+                    />
+                    <button
+                      onClick={() => setPrice((v) => Number(v) + 1)}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        background: C.greySoft,
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: 20,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: C.ink,
+                      }}
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.inkSoft, marginBottom: 6 }}>
+                    Что за акция?
+                  </div>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Например: скидка на молочку 20%"
+                    style={{
+                      width: "100%",
+                      fontFamily: "Manrope, sans-serif",
+                      fontSize: 13.5,
+                      border: `1px solid ${C.line}`,
+                      borderRadius: 12,
+                      padding: "10px 12px",
+                      color: C.ink,
+                      outline: "none",
+                      background: C.bg,
+                      marginBottom: 12,
+                    }}
+                  />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.inkSoft, marginBottom: 6 }}>
+                    Выгода
+                  </div>
+                  <input
+                    type="text"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    style={{
+                      width: "100%",
+                      fontFamily: "Manrope, sans-serif",
+                      fontSize: 13.5,
+                      border: `1px solid ${C.line}`,
+                      borderRadius: 12,
+                      padding: "10px 12px",
+                      color: C.ink,
+                      outline: "none",
+                      background: C.bg,
+                      marginBottom: 12,
+                    }}
+                  />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.inkSoft, marginBottom: 6 }}>
+                    Действует
+                  </div>
+                  <select
+                    value={until}
+                    onChange={(e) => setUntil(e.target.value)}
+                    style={{
+                      width: "100%",
+                      fontFamily: "Manrope, sans-serif",
+                      fontSize: 13.5,
+                      border: `1px solid ${C.line}`,
+                      borderRadius: 12,
+                      padding: "10px 12px",
+                      color: C.ink,
+                      outline: "none",
+                      background: C.bg,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <option value="3 дня">3 дня</option>
+                    <option value="неделю">неделю</option>
+                    <option value="месяц">месяц</option>
+                  </select>
+                </>
+              )}
+
+              <button
+                onClick={() => setPhoto((v) => !v)}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: "12px 0",
+                  borderRadius: 14,
+                  border: `1.5px dashed ${photo ? C.brand : C.line}`,
+                  background: photo ? C.brandSoft : "transparent",
+                  color: photo ? C.brand : C.inkSoft,
+                  fontFamily: "Manrope, sans-serif",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  marginBottom: 8,
+                }}
+              >
+                {photo ? <Check size={18} /> : <Camera size={18} />}
+                {photo ? "Фото чека/ценника прикреплено" : "Прикрепить фото чека или ценника"}
+              </button>
+              <div style={{ fontSize: 12, color: C.inkFaint, textAlign: "center", marginBottom: 16 }}>
+                Необязательно, но отметки с фото вызывают больше доверия у соседей.
+              </div>
+
+              <button
+                onClick={handleSubmit}
+                style={{
+                  width: "100%",
+                  padding: "14px 0",
+                  borderRadius: 16,
+                  background: C.brand,
+                  color: "#fff",
+                  border: "none",
+                  fontFamily: "Unbounded, sans-serif",
+                  fontWeight: 700,
+                  fontSize: 16,
+                  cursor: "pointer",
+                  transition: "opacity 0.15s, box-shadow 0.15s",
+                  boxShadow: "0 0 20px rgba(0,212,255,0.3)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = 0.85;
+                  e.currentTarget.style.boxShadow = "0 0 40px rgba(0,212,255,0.5)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = 1;
+                  e.currentTarget.style.boxShadow = "0 0 20px rgba(0,212,255,0.3)";
+                }}
+              >
+                Отправить отметку
+              </button>
+              <div style={{ fontSize: 12, color: C.inkFaint, textAlign: "center", marginTop: 8 }}>
+                Отметка анонимна и появится на карте сразу
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ---------------------------------- App ----------------------------------
 export default function GdeSkidkaPrototype() {
@@ -570,30 +1248,49 @@ export default function GdeSkidkaPrototype() {
         ))}
       </div>
 
-      {/* Карта */}
+      {/* Карта OpenStreetMap (бесплатно, без ключей) */}
       <div style={{ width: '100%', height: '50vh', minHeight: '300px', maxHeight: '600px', background: '#0F131F', border: `1px solid ${C.line}`, borderRadius: 12, overflow: 'hidden', margin: '8px 0' }}>
-        <YMaps query={{ apikey: import.meta.env.VITE_YANDEX_MAPS_API_KEY || 'ваш_ключ_заглушка' }}>
-          <Map
-            state={{ center: [58.010, 56.250], zoom: 12 }}
-            width="100%"
-            height="100%"
-          >
-            {visiblePoints.map((p) => (
-              <Placemark
-                key={p.id}
-                geometry={[p.lat, p.lng]}
-                onClick={() => setSelectedId(p.id)}
-                properties={{
-                  balloonContent: `<div style="color:#000"><strong>${p.name}</strong><br/>${p.address}</div>`
-                }}
-                options={{
-                  preset: 'islands#blueCircleDotIconWithCaption',
-                  iconColor: '#00D4FF'
-                }}
-              />
-            ))}
-          </Map>
-        </YMaps>
+        <MapContainer
+          center={[58.010, 56.250]}
+          zoom={12}
+          style={{ height: '100%', width: '100%' }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {visiblePoints.map((p) => (
+            <Marker
+              key={p.id}
+              position={[p.lat, p.lng]}
+              eventHandlers={{
+                click: () => setSelectedId(p.id),
+              }}
+            >
+              <Popup>
+                <div>
+                  <strong>{p.name}</strong><br />
+                  {p.address}<br />
+                  <button
+                    onClick={() => setSelectedId(p.id)}
+                    style={{
+                      marginTop: 6,
+                      padding: '4px 12px',
+                      background: C.brand,
+                      color: '#000',
+                      border: 'none',
+                      borderRadius: 20,
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    Подробнее
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
       </div>
 
       {/* Stats */}
