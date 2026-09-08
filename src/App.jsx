@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus, X, Check, Camera, Share2,
   ThumbsUp, ThumbsDown, Milk, Wheat, Egg, Fuel, Droplet,
@@ -7,6 +7,34 @@ import {
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+// Firebase
+import { initializeApp } from 'firebase/app';
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  doc,
+  getDocs,
+  setDoc
+} from 'firebase/firestore';
+
+// ---------------------------------- Firebase конфиг ----------------------------------
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+// Инициализация Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const pointsCollection = collection(db, 'points');
 
 // Исправление иконок Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -59,13 +87,12 @@ const PROMO_CATS = [
 
 const TYPE_LABEL = { shop: "Магазин", gas: "АЗС", cafe: "Кафе" };
 
-// ----- Функция для генерации случайных цен -----
+// ----- Генерация цен (для моковых данных) -----
 const generatePrice = (base, variation = 0.05) => {
   const delta = base * variation * (Math.random() * 2 - 1);
   return Math.round((base + delta) * 10) / 10;
 };
 
-// ----- Список социально значимых продуктов -----
 const SOCIAL_PRODUCTS = [
   { name: "Говядина", cat: "meat", basePrice: 600, unit: "кг" },
   { name: "Свинина", cat: "meat", basePrice: 350, unit: "кг" },
@@ -94,7 +121,6 @@ const SOCIAL_PRODUCTS = [
   { name: "Чай чёрный байховый", cat: "groceries", basePrice: 80, unit: "пачка" },
 ];
 
-// ----- Генерация цен для магазина -----
 const generatePricesForStore = () => {
   return SOCIAL_PRODUCTS.map((p, index) => {
     const price = generatePrice(p.basePrice);
@@ -116,8 +142,8 @@ const generatePricesForStore = () => {
   });
 };
 
-// ----- Только Пермь, только Пятёрочка (реальные адреса) -----
-const PERM_PYATEROCHKA_POINTS = [
+// ----- Моковые данные (только Пермь, только Пятёрочка) -----
+const INITIAL_POINTS = [
   {
     id: 1,
     name: "Пятёрочка на Компросе",
@@ -1027,15 +1053,51 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
 export default function GdeSkidkaPrototype() {
   const [mode, setMode] = useState("prices");
   const [category, setCategory] = useState("all");
-  const [points, setPoints] = useState(PERM_PYATEROCHKA_POINTS);
+  const [points, setPoints] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addPointId, setAddPointId] = useState(null);
   const [listExpanded, setListExpanded] = useState(false);
-  const [helped, setHelped] = useState(128);
+  const [helped, setHelped] = useState(0);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
+  // ------ Загрузка данных из Firestore и инициализация ------
+  useEffect(() => {
+    const unsubscribe = onSnapshot(pointsCollection, (snapshot) => {
+      const data = [];
+      snapshot.forEach((doc) => {
+        data.push({ ...doc.data(), firestoreId: doc.id });
+      });
+      if (data.length === 0) {
+        // Если в Firestore пусто, записываем моковые данные
+        INITIAL_POINTS.forEach(async (p) => {
+          try {
+            await addDoc(pointsCollection, p);
+          } catch (e) {
+            console.error('Error adding initial point:', e);
+          }
+        });
+        setPoints(INITIAL_POINTS);
+        setHelped(128); // начальное число
+      } else {
+        setPoints(data);
+        // Подсчёт общего количества подтверждений
+        const totalConfirms = data.reduce((acc, p) => {
+          const priceConfirms = p.prices.reduce((s, item) => s + (item.confirms || 0), 0);
+          const promoConfirms = p.promos.reduce((s, item) => s + (item.confirms || 0), 0);
+          return acc + priceConfirms + promoConfirms;
+        }, 0);
+        setHelped(totalConfirms || 128);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ------ Вспомогательные функции ------
   function showToast(text) {
     setToast(text);
     clearTimeout(toastTimer.current);
@@ -1047,38 +1109,48 @@ export default function GdeSkidkaPrototype() {
     (p) => pinTone(p, mode, category, points) !== null
   );
 
-  function updatePoints(updater) {
-    setPoints(updater);
+  // ------ Обновление данных в Firestore ------
+  async function updatePointInFirestore(pointId, updatedData) {
+    try {
+      const docRef = doc(db, 'points', pointId);
+      await updateDoc(docRef, updatedData);
+    } catch (e) {
+      console.error('Error updating document: ', e);
+    }
   }
 
+  async function addPointToFirestore(newPoint) {
+    try {
+      await addDoc(pointsCollection, newPoint);
+    } catch (e) {
+      console.error('Error adding document: ', e);
+    }
+  }
+
+  // ------ Обработчики ------
   function handleConfirm(pointId, kind, itemId) {
-    updatePoints((prev) =>
-      prev.map((p) => {
-        if (p.id !== pointId) return p;
-        return {
-          ...p,
-          [kind]: p[kind].map((it) =>
-            it.id === itemId ? { ...it, mins: 0, confirms: it.confirms + 1 } : it
-          ),
-        };
-      })
-    );
-    setHelped((h) => h + 1);
+    const point = points.find(p => p.id === pointId);
+    if (!point) return;
+    const updated = {
+      ...point,
+      [kind]: point[kind].map((it) =>
+        it.id === itemId ? { ...it, mins: 0, confirms: (it.confirms || 0) + 1 } : it
+      )
+    };
+    updatePointInFirestore(point.firestoreId, updated);
     showToast("Спасибо! Отметка обновлена ✅");
   }
 
   function handleReport(pointId, kind, itemId) {
-    updatePoints((prev) =>
-      prev.map((p) => {
-        if (p.id !== pointId) return p;
-        return {
-          ...p,
-          [kind]: p[kind].map((it) =>
-            it.id === itemId ? { ...it, status: "reported" } : it
-          ),
-        };
-      })
-    );
+    const point = points.find(p => p.id === pointId);
+    if (!point) return;
+    const updated = {
+      ...point,
+      [kind]: point[kind].map((it) =>
+        it.id === itemId ? { ...it, status: "reported" } : it
+      )
+    };
+    updatePointInFirestore(point.firestoreId, updated);
     showToast("Приняли, проверим и уберём с карты");
   }
 
@@ -1094,24 +1166,40 @@ export default function GdeSkidkaPrototype() {
   }
 
   function handleSubmitMark(pointId, payload) {
-    updatePoints((prev) =>
-      prev.map((p) =>
-        p.id === pointId
-          ? { ...p, [payload.type]: [payload.entry, ...p[payload.type]] }
-          : p
-      )
-    );
-    setHelped((h) => h + 1);
-    setAddOpen(false);
+    const point = points.find(p => p.id === pointId);
+    if (!point) return;
+    const updated = {
+      ...point,
+      [payload.type]: [payload.entry, ...point[payload.type]]
+    };
+    updatePointInFirestore(point.firestoreId, updated);
     showToast(
       payload.type === "prices"
         ? "Цена добавлена на карту ✅"
         : "Акция добавлена на карту ✅"
     );
     setSelectedId(pointId);
+    setAddOpen(false);
   }
 
   const selectedPoint = points.find((p) => p.id === selectedId) || null;
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: C.bg,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: C.ink,
+        fontFamily: 'Manrope, sans-serif',
+        fontSize: 18,
+      }}>
+        Загрузка карты...
+      </div>
+    );
+  }
 
   return (
     <div
@@ -1248,7 +1336,7 @@ export default function GdeSkidkaPrototype() {
         ))}
       </div>
 
-      {/* Карта OpenStreetMap (бесплатно, без ключей) */}
+      {/* Карта OpenStreetMap */}
       <div style={{ width: '100%', height: '50vh', minHeight: '300px', maxHeight: '600px', background: '#0F131F', border: `1px solid ${C.line}`, borderRadius: 12, overflow: 'hidden', margin: '8px 0' }}>
         <MapContainer
           center={[58.010, 56.250]}
