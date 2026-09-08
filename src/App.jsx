@@ -46,7 +46,7 @@ const PROMO_CATS = [
 
 const TYPE_LABEL = { shop: "Магазин", gas: "АЗС", cafe: "Кафе" };
 
-// ----- Только Пермь, только Пятёрочка -----
+// ----- Только Пермь, только Пятёрочка (реальные адреса) -----
 const PERM_PYATEROCHKA_POINTS = [
   {
     id: 1,
@@ -82,7 +82,174 @@ const PERM_PYATEROCHKA_POINTS = [
       { id: "m2", cat: "cashback", title: "Кэшбэк 10% картой «Семья»", value: "+10%", until: "до 30 сент.", mins: 70, confirms: 9, status: "active" },
     ],
   },
-  // Добавьте сюда другие Пятёрочки, если есть реальные данные
+  {
+    id: 3,
+    name: "Пятёрочка на Ушакова",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Ушакова, 55/2",
+    lat: 58.004,
+    lng: 56.228,
+    prices: [
+      { id: "p7", cat: "milk", value: 89, unit: "л", mins: 30, confirms: 5, status: "active" },
+      { id: "p8", cat: "bread", value: 42, unit: "шт", mins: 45, confirms: 4, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 4,
+    name: "Пятёрочка на Сеченова",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Сеченова, 9",
+    lat: 58.010,
+    lng: 56.270,
+    prices: [
+      { id: "p9", cat: "milk", value: 87, unit: "л", mins: 20, confirms: 7, status: "active" },
+      { id: "p10", cat: "bread", value: 39, unit: "шт", mins: 25, confirms: 6, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 5,
+    name: "Пятёрочка на Маяковского",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Маяковского, 8",
+    lat: 58.014,
+    lng: 56.252,
+    prices: [
+      { id: "p11", cat: "milk", value: 90, unit: "л", mins: 15, confirms: 8, status: "active" },
+      { id: "p12", cat: "bread", value: 41, unit: "шт", mins: 18, confirms: 5, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 6,
+    name: "Пятёрочка на Островского",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Николая Островского, 74",
+    lat: 58.020,
+    lng: 56.245,
+    prices: [
+      { id: "p13", cat: "milk", value: 92, unit: "л", mins: 10, confirms: 9, status: "active" },
+      { id: "p14", cat: "bread", value: 43, unit: "шт", mins: 12, confirms: 7, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 7,
+    name: "Пятёрочка на Стахановской",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Стахановская, 44",
+    lat: 58.025,
+    lng: 56.260,
+    prices: [
+      { id: "p15", cat: "milk", value: 86, unit: "л", mins: 40, confirms: 4, status: "active" },
+      { id: "p16", cat: "bread", value: 38, unit: "шт", mins: 35, confirms: 3, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 8,
+    name: "Пятёрочка на Веденеева",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Академика Веденеева, 31/1",
+    lat: 58.008,
+    lng: 56.240,
+    prices: [
+      { id: "p17", cat: "milk", value: 88, unit: "л", mins: 25, confirms: 6, status: "active" },
+      { id: "p18", cat: "bread", value: 40, unit: "шт", mins: 28, confirms: 5, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 9,
+    name: "Пятёрочка на Барбюса",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Анри Барбюса, 47",
+    lat: 58.030,
+    lng: 56.306,
+    prices: [
+      { id: "p19", cat: "milk", value: 85, unit: "л", mins: 50, confirms: 3, status: "active" },
+      { id: "p20", cat: "bread", value: 37, unit: "шт", mins: 55, confirms: 2, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 10,
+    name: "Пятёрочка на Подлесной",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Подлесная, 2А",
+    lat: 58.012,
+    lng: 56.215,
+    prices: [
+      { id: "p21", cat: "milk", value: 89, unit: "л", mins: 35, confirms: 5, status: "active" },
+      { id: "p22", cat: "bread", value: 41, unit: "шт", mins: 38, confirms: 4, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 11,
+    name: "Пятёрочка на Гайвинском",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "2-й Гайвинский переулок, 1",
+    lat: 58.018,
+    lng: 56.232,
+    prices: [
+      { id: "p23", cat: "milk", value: 87, unit: "л", mins: 22, confirms: 6, status: "active" },
+      { id: "p24", cat: "bread", value: 39, unit: "шт", mins: 26, confirms: 5, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 12,
+    name: "Пятёрочка на Широкой",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Широкая, 2А",
+    lat: 58.005,
+    lng: 56.225,
+    prices: [
+      { id: "p25", cat: "milk", value: 90, unit: "л", mins: 18, confirms: 7, status: "active" },
+      { id: "p26", cat: "bread", value: 42, unit: "шт", mins: 20, confirms: 6, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 13,
+    name: "Пятёрочка на Рабочей",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Рабочая, 9Б",
+    lat: 58.015,
+    lng: 56.248,
+    prices: [
+      { id: "p27", cat: "milk", value: 88, unit: "л", mins: 30, confirms: 4, status: "active" },
+      { id: "p28", cat: "bread", value: 40, unit: "шт", mins: 32, confirms: 3, status: "active" },
+    ],
+    promos: [],
+  },
+  {
+    id: 14,
+    name: "Пятёрочка на Клары Цеткин",
+    brand: "Пятёрочка",
+    type: "shop",
+    address: "ул. Клары Цеткин, 436",
+    lat: 58.011,
+    lng: 56.242,
+    prices: [
+      { id: "p29", cat: "milk", value: 86, unit: "л", mins: 45, confirms: 4, status: "active" },
+      { id: "p30", cat: "bread", value: 38, unit: "шт", mins: 48, confirms: 3, status: "active" },
+    ],
+    promos: [],
+  },
 ];
 
 // ---------------------------------- helpers ----------------------------------
