@@ -8,7 +8,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Firebase
+// ==================== FIREBASE ====================
 import { initializeApp } from 'firebase/app';
 import {
   getFirestore,
@@ -17,26 +17,39 @@ import {
   addDoc,
   updateDoc,
   doc,
+  setDoc,
   getDocs,
-  setDoc
 } from 'firebase/firestore';
 
-// ---------------------------------- Firebase конфиг ----------------------------------
+// Конфиг Firebase (читаем из переменных окружения)
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
 };
 
-// Инициализация Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const pointsCollection = collection(db, 'points');
+// Инициализация Firebase только если есть ключи
+let db = null;
+let pointsCollection = null;
+let isFirebaseConfigured = false;
 
-// Исправление иконок Leaflet
+try {
+  if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    pointsCollection = collection(db, 'points');
+    isFirebaseConfigured = true;
+  } else {
+    console.warn('Firebase не настроен. Используются локальные данные.');
+  }
+} catch (e) {
+  console.warn('Ошибка инициализации Firebase:', e);
+}
+
+// ==================== ИСПРАВЛЕНИЕ ИКОНОК LEAFLET ====================
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -44,7 +57,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// ---------------------------------- Неоновая тёмная тема ----------------------------------
+// ==================== СТИЛИ ====================
 const C = {
   bg: "#0B0E1A",
   page: "#0F131F",
@@ -64,7 +77,7 @@ const C = {
   greySoft: "#1E2638",
 };
 
-// ---------------------------------- Категории ----------------------------------
+// ==================== КАТЕГОРИИ ====================
 const PRICE_CATS = [
   { id: "all", label: "Все товары", icon: LayoutGrid, unit: "" },
   { id: "milk", label: "Молоко", icon: Milk, unit: "л" },
@@ -87,7 +100,7 @@ const PROMO_CATS = [
 
 const TYPE_LABEL = { shop: "Магазин", gas: "АЗС", cafe: "Кафе" };
 
-// ----- Генерация цен (для моковых данных) -----
+// ==================== ГЕНЕРАЦИЯ ЦЕН ====================
 const generatePrice = (base, variation = 0.05) => {
   const delta = base * variation * (Math.random() * 2 - 1);
   return Math.round((base + delta) * 10) / 10;
@@ -142,7 +155,7 @@ const generatePricesForStore = () => {
   });
 };
 
-// ----- Моковые данные (только Пермь, только Пятёрочка) -----
+// ==================== МОКОВЫЕ ДАННЫЕ ====================
 const INITIAL_POINTS = [
   {
     id: 1,
@@ -304,7 +317,7 @@ const INITIAL_POINTS = [
   },
 ];
 
-// ---------------------------------- helpers ----------------------------------
+// ==================== ХЕЛПЕРЫ ====================
 function timeAgo(mins) {
   if (mins < 1) return "только что";
   if (mins < 60) return `${mins} мин назад`;
@@ -370,7 +383,7 @@ const TONE_HEX = {
   grey: C.grey,
 };
 
-// ---------------------------------- компоненты ----------------------------------
+// ==================== КОМПОНЕНТЫ ====================
 function IconCircleButton({ onClick, children, size = 38, title }) {
   return (
     <button
@@ -1049,7 +1062,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
   );
 }
 
-// ---------------------------------- App ----------------------------------
+// ==================== ГЛАВНОЕ ПРИЛОЖЕНИЕ ====================
 export default function GdeSkidkaPrototype() {
   const [mode, setMode] = useState("prices");
   const [category, setCategory] = useState("all");
@@ -1063,41 +1076,54 @@ export default function GdeSkidkaPrototype() {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
-  // ------ Загрузка данных из Firestore и инициализация ------
+  // Загрузка данных из Firestore (или локально)
   useEffect(() => {
-    const unsubscribe = onSnapshot(pointsCollection, (snapshot) => {
-      const data = [];
-      snapshot.forEach((doc) => {
-        data.push({ ...doc.data(), firestoreId: doc.id });
-      });
-      if (data.length === 0) {
-        // Если в Firestore пусто, записываем моковые данные
-        INITIAL_POINTS.forEach(async (p) => {
-          try {
-            await addDoc(pointsCollection, p);
-          } catch (e) {
-            console.error('Error adding initial point:', e);
-          }
+    if (isFirebaseConfigured && pointsCollection) {
+      // Подписка на реальные обновления из Firestore
+      const unsubscribe = onSnapshot(pointsCollection, (snapshot) => {
+        const data = [];
+        snapshot.forEach((doc) => {
+          data.push({ ...doc.data(), firestoreId: doc.id });
         });
-        setPoints(INITIAL_POINTS);
-        setHelped(128); // начальное число
-      } else {
-        setPoints(data);
-        // Подсчёт общего количества подтверждений
-        const totalConfirms = data.reduce((acc, p) => {
-          const priceConfirms = p.prices.reduce((s, item) => s + (item.confirms || 0), 0);
-          const promoConfirms = p.promos.reduce((s, item) => s + (item.confirms || 0), 0);
-          return acc + priceConfirms + promoConfirms;
-        }, 0);
-        setHelped(totalConfirms || 128);
-      }
-      setLoading(false);
-    });
+        if (data.length === 0) {
+          // Если база пуста, заливаем начальные данные
+          INITIAL_POINTS.forEach(async (p) => {
+            try {
+              await addDoc(pointsCollection, p);
+            } catch (e) {
+              console.error('Ошибка добавления начальных данных:', e);
+            }
+          });
+          setPoints(INITIAL_POINTS);
+          setHelped(128);
+        } else {
+          setPoints(data);
+          // Подсчёт общего количества подтверждений
+          const totalConfirms = data.reduce((acc, p) => {
+            const priceConfirms = p.prices.reduce((s, item) => s + (item.confirms || 0), 0);
+            const promoConfirms = p.promos.reduce((s, item) => s + (item.confirms || 0), 0);
+            return acc + priceConfirms + promoConfirms;
+          }, 0);
+          setHelped(totalConfirms || 128);
+        }
+        setLoading(false);
+      }, (error) => {
+        console.error('Ошибка загрузки данных из Firestore:', error);
+        setLoading(false);
+      });
 
-    return () => unsubscribe();
+      return () => unsubscribe();
+    } else {
+      // Если Firebase не настроен — используем локальные данные
+      setPoints(INITIAL_POINTS);
+      setHelped(128);
+      setLoading(false);
+      if (!isFirebaseConfigured) {
+        console.warn('Firebase не настроен. Данные сохраняются только локально (в памяти).');
+      }
+    }
   }, []);
 
-  // ------ Вспомогательные функции ------
   function showToast(text) {
     setToast(text);
     clearTimeout(toastTimer.current);
@@ -1109,25 +1135,40 @@ export default function GdeSkidkaPrototype() {
     (p) => pinTone(p, mode, category, points) !== null
   );
 
-  // ------ Обновление данных в Firestore ------
+  // Обновление документа в Firestore
   async function updatePointInFirestore(pointId, updatedData) {
+    if (!isFirebaseConfigured) {
+      // Если Firebase не настроен — просто обновляем локальный стейт
+      setPoints(prev =>
+        prev.map(p => p.id === pointId ? { ...updatedData, id: pointId } : p)
+      );
+      return;
+    }
     try {
       const docRef = doc(db, 'points', pointId);
       await updateDoc(docRef, updatedData);
     } catch (e) {
-      console.error('Error updating document: ', e);
+      console.error('Ошибка обновления документа:', e);
+      showToast('Ошибка сохранения, попробуйте позже');
     }
   }
 
+  // Добавление нового документа в Firestore
   async function addPointToFirestore(newPoint) {
+    if (!isFirebaseConfigured) {
+      // Если Firebase не настроен — просто добавляем в локальный стейт
+      setPoints(prev => [newPoint, ...prev]);
+      return;
+    }
     try {
       await addDoc(pointsCollection, newPoint);
     } catch (e) {
-      console.error('Error adding document: ', e);
+      console.error('Ошибка добавления документа:', e);
+      showToast('Ошибка сохранения, попробуйте позже');
     }
   }
 
-  // ------ Обработчики ------
+  // Обработчики событий
   function handleConfirm(pointId, kind, itemId) {
     const point = points.find(p => p.id === pointId);
     if (!point) return;
@@ -1137,7 +1178,14 @@ export default function GdeSkidkaPrototype() {
         it.id === itemId ? { ...it, mins: 0, confirms: (it.confirms || 0) + 1 } : it
       )
     };
-    updatePointInFirestore(point.firestoreId, updated);
+    if (point.firestoreId) {
+      updatePointInFirestore(point.firestoreId, updated);
+    } else {
+      // Если нет firestoreId — обновляем локально
+      setPoints(prev =>
+        prev.map(p => p.id === pointId ? updated : p)
+      );
+    }
     showToast("Спасибо! Отметка обновлена ✅");
   }
 
@@ -1150,7 +1198,13 @@ export default function GdeSkidkaPrototype() {
         it.id === itemId ? { ...it, status: "reported" } : it
       )
     };
-    updatePointInFirestore(point.firestoreId, updated);
+    if (point.firestoreId) {
+      updatePointInFirestore(point.firestoreId, updated);
+    } else {
+      setPoints(prev =>
+        prev.map(p => p.id === pointId ? updated : p)
+      );
+    }
     showToast("Приняли, проверим и уберём с карты");
   }
 
@@ -1172,7 +1226,13 @@ export default function GdeSkidkaPrototype() {
       ...point,
       [payload.type]: [payload.entry, ...point[payload.type]]
     };
-    updatePointInFirestore(point.firestoreId, updated);
+    if (point.firestoreId) {
+      updatePointInFirestore(point.firestoreId, updated);
+    } else {
+      setPoints(prev =>
+        prev.map(p => p.id === pointId ? updated : p)
+      );
+    }
     showToast(
       payload.type === "prices"
         ? "Цена добавлена на карту ✅"
