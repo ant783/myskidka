@@ -4,27 +4,26 @@ import {
   ThumbsUp, ThumbsDown, Milk, Wheat, Egg, Fuel, Droplet,
   LayoutGrid, Percent, Layers, Wallet, Tag, Minus, Sparkles
 } from 'lucide-react';
-// Правильный импорт для @pbe/react-yandex-maps
 import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps';
 
-// ---------------------------------- tokens ----------------------------------
+// ---------------------------------- Неоновая тёмная тема ----------------------------------
 const C = {
-  bg: "#EFF3EC",
-  page: "#DCE3D6",
-  surface: "#FFFFFF",
-  ink: "#1E2A22",
-  inkSoft: "#5C6B60",
-  inkFaint: "#8B978C",
-  line: "#E3E9DE",
-  brand: "#2F6E52",
-  brandDark: "#1F4D39",
-  brandSoft: "#E4EFE7",
-  amber: "#E8A33D",
-  amberSoft: "#FBF0DE",
-  coral: "#E2574C",
-  coralSoft: "#FBE7E4",
-  grey: "#A9B2AB",
-  greySoft: "#EEF1EC",
+  bg: "#0B0E1A",
+  page: "#0F131F",
+  surface: "#161E2E",
+  ink: "#E8EDF5",
+  inkSoft: "#9AA9C0",
+  inkFaint: "#5A6A7E",
+  line: "#2A3344",
+  brand: "#00D4FF",
+  brandDark: "#0099CC",
+  brandSoft: "#0A2A3A",
+  amber: "#FBBF24",
+  amberSoft: "#2A2410",
+  coral: "#FF5E7A",
+  coralSoft: "#2A1016",
+  grey: "#3A4A5E",
+  greySoft: "#1E2638",
 };
 
 // ---------------------------------- data ----------------------------------
@@ -314,10 +313,17 @@ function IconCircleButton({ onClick, children, size = 38, title }) {
         justifyContent: "center",
         cursor: "pointer",
         color: C.ink,
-        transition: "background 0.15s",
+        transition: "background 0.15s, box-shadow 0.15s",
+        boxShadow: "0 0 8px rgba(0,212,255,0.1)",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = C.greySoft)}
-      onMouseLeave={(e) => (e.currentTarget.style.background = C.surface)}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = C.brandSoft;
+        e.currentTarget.style.boxShadow = "0 0 20px rgba(0,212,255,0.3)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = C.surface;
+        e.currentTarget.style.boxShadow = "0 0 8px rgba(0,212,255,0.1)";
+      }}
     >
       {children}
     </button>
@@ -333,7 +339,7 @@ function Chip({ active, onClick, icon: Icon, label }) {
         borderRadius: 30,
         border: `1.5px solid ${active ? C.brand : C.line}`,
         background: active ? C.brandSoft : "transparent",
-        color: active ? C.brandDark : C.inkSoft,
+        color: active ? C.brand : C.inkSoft,
         fontFamily: "Manrope, sans-serif",
         fontWeight: 600,
         fontSize: 12,
@@ -341,8 +347,21 @@ function Chip({ active, onClick, icon: Icon, label }) {
         alignItems: "center",
         gap: 6,
         cursor: "pointer",
-        transition: "all 0.15s",
+        transition: "all 0.15s, box-shadow 0.15s",
         whiteSpace: "nowrap",
+        boxShadow: active ? "0 0 20px rgba(0,212,255,0.2)" : "none",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.borderColor = C.brand;
+          e.currentTarget.style.color = C.brand;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.borderColor = C.line;
+          e.currentTarget.style.color = C.inkSoft;
+        }
       }}
     >
       {Icon && <Icon size={14} />}
@@ -368,7 +387,8 @@ function PointSheet({ point, mode, onClose, onConfirm, onReport, onAddHere }) {
         maxHeight: "84vh",
         display: "flex",
         flexDirection: "column",
-        boxShadow: "0 -8px 40px rgba(0,0,0,0.12)",
+        boxShadow: "0 -8px 40px rgba(0,212,255,0.15)",
+        borderTop: `1px solid ${C.brand}`,
       }}
     >
       <div
@@ -381,7 +401,7 @@ function PointSheet({ point, mode, onClose, onConfirm, onReport, onAddHere }) {
         }}
       >
         <div>
-          <div style={{ fontFamily: "Unbounded, sans-serif", fontWeight: 700, fontSize: 18, color: C.ink }}>
+          <div style={{ fontFamily: "Unbounded, sans-serif", fontWeight: 700, fontSize: 18, color: C.brand }}>
             {point.name}
           </div>
           <div style={{ fontSize: 13, color: C.inkSoft, marginTop: 2 }}>
@@ -406,7 +426,7 @@ function PointSheet({ point, mode, onClose, onConfirm, onReport, onAddHere }) {
       <div style={{ padding: "16px 20px 20px 20px", overflowY: "auto", flex: 1 }}>
         {priceItems.length > 0 && (
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: C.inkFaint, marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: C.brand, marginBottom: 10 }}>
               Цены по отметкам покупателей
             </div>
             {priceItems.map((it) => {
@@ -475,7 +495,7 @@ function PointSheet({ point, mode, onClose, onConfirm, onReport, onAddHere }) {
 
         {promoItems.length > 0 && (
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: C.inkFaint, marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: C.brand, marginBottom: 10 }}>
               Акции и скидки
             </div>
             {promoItems.map((it) => {
@@ -576,10 +596,17 @@ function PointSheet({ point, mode, onClose, onConfirm, onReport, onAddHere }) {
             fontSize: 14.5,
             cursor: "pointer",
             marginTop: 12,
-            transition: "opacity 0.15s",
+            transition: "opacity 0.15s, box-shadow 0.15s",
+            boxShadow: "0 0 20px rgba(0,212,255,0.3)",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = 0.85)}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = 1)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = 0.85;
+            e.currentTarget.style.boxShadow = "0 0 40px rgba(0,212,255,0.5)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = 1;
+            e.currentTarget.style.boxShadow = "0 0 20px rgba(0,212,255,0.3)";
+          }}
         >
           {mode === "prices" ? "Отметить цену здесь" : "Добавить акцию здесь"}
         </button>
@@ -645,7 +672,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.4)",
+        background: "rgba(0,0,0,0.7)",
         backdropFilter: "blur(6px)",
         display: "flex",
         alignItems: "flex-end",
@@ -665,7 +692,8 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
           maxHeight: "88vh",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 -8px 40px rgba(0,0,0,0.12)",
+          boxShadow: "0 -8px 40px rgba(0,212,255,0.15)",
+          borderTop: `1px solid ${C.brand}`,
         }}
       >
         <div
@@ -677,7 +705,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
             alignItems: "center",
           }}
         >
-          <div style={{ fontFamily: "Unbounded, sans-serif", fontWeight: 700, fontSize: 18, color: C.ink }}>
+          <div style={{ fontFamily: "Unbounded, sans-serif", fontWeight: 700, fontSize: 18, color: C.brand }}>
             {mode === "prices" ? "Отметить цену" : "Добавить акцию"}
           </div>
           <button
@@ -770,6 +798,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        color: C.ink,
                       }}
                     >
                       <Minus size={18} />
@@ -789,6 +818,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
                         padding: "8px 0",
                         color: C.ink,
                         outline: "none",
+                        background: C.bg,
                       }}
                     />
                     <button
@@ -804,6 +834,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        color: C.ink,
                       }}
                     >
                       <Plus size={18} />
@@ -829,6 +860,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
                       padding: "10px 12px",
                       color: C.ink,
                       outline: "none",
+                      background: C.bg,
                       marginBottom: 12,
                     }}
                   />
@@ -848,6 +880,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
                       padding: "10px 12px",
                       color: C.ink,
                       outline: "none",
+                      background: C.bg,
                       marginBottom: 12,
                     }}
                   />
@@ -866,6 +899,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
                       padding: "10px 12px",
                       color: C.ink,
                       outline: "none",
+                      background: C.bg,
                       marginBottom: 12,
                     }}
                   >
@@ -888,7 +922,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
                   borderRadius: 14,
                   border: `1.5px dashed ${photo ? C.brand : C.line}`,
                   background: photo ? C.brandSoft : "transparent",
-                  color: photo ? C.brandDark : C.inkSoft,
+                  color: photo ? C.brand : C.inkSoft,
                   fontFamily: "Manrope, sans-serif",
                   fontWeight: 600,
                   fontSize: 13,
@@ -916,10 +950,17 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
                   fontWeight: 700,
                   fontSize: 16,
                   cursor: "pointer",
-                  transition: "opacity 0.15s",
+                  transition: "opacity 0.15s, box-shadow 0.15s",
+                  boxShadow: "0 0 20px rgba(0,212,255,0.3)",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = 0.85)}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = 1)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = 0.85;
+                  e.currentTarget.style.boxShadow = "0 0 40px rgba(0,212,255,0.5)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = 1;
+                  e.currentTarget.style.boxShadow = "0 0 20px rgba(0,212,255,0.3)";
+                }}
               >
                 Отправить отметку
               </button>
@@ -1074,16 +1115,17 @@ export default function GdeSkidkaPrototype() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#fff",
+              color: "#000",
               fontSize: 18,
               fontWeight: 800,
               fontFamily: "Unbounded, sans-serif",
+              boxShadow: "0 0 20px rgba(0,212,255,0.3)",
             }}
           >
             ₽
           </div>
           <div style={{ fontFamily: "Unbounded, sans-serif", fontWeight: 700, fontSize: 18 }}>
-            Где<span style={{ color: C.brand }}>Скидка</span>
+            Где<span style={{ color: C.brand, textShadow: "0 0 20px rgba(0,212,255,0.4)" }}>Скидка</span>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1091,7 +1133,7 @@ export default function GdeSkidkaPrototype() {
             onClick={() => setCityOpen(!cityOpen)}
             style={{
               background: C.greySoft,
-              border: "none",
+              border: `1px solid ${C.line}`,
               borderRadius: 30,
               padding: "6px 14px",
               fontFamily: "Manrope, sans-serif",
@@ -1114,7 +1156,7 @@ export default function GdeSkidkaPrototype() {
                 right: 20,
                 background: C.surface,
                 borderRadius: 16,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.8)",
                 border: `1px solid ${C.line}`,
                 padding: 8,
                 zIndex: 30,
@@ -1178,12 +1220,13 @@ export default function GdeSkidkaPrototype() {
             borderRadius: 30,
             border: "none",
             background: mode === "prices" ? C.brand : "transparent",
-            color: mode === "prices" ? "#fff" : C.inkSoft,
+            color: mode === "prices" ? "#000" : C.inkSoft,
             fontFamily: "Manrope, sans-serif",
             fontWeight: 700,
             fontSize: 13,
             cursor: "pointer",
             transition: "all 0.15s",
+            boxShadow: mode === "prices" ? "0 0 20px rgba(0,212,255,0.3)" : "none",
           }}
         >
           Цены
@@ -1196,12 +1239,13 @@ export default function GdeSkidkaPrototype() {
             borderRadius: 30,
             border: "none",
             background: mode === "promos" ? C.brand : "transparent",
-            color: mode === "promos" ? "#fff" : C.inkSoft,
+            color: mode === "promos" ? "#000" : C.inkSoft,
             fontFamily: "Manrope, sans-serif",
             fontWeight: 700,
             fontSize: 13,
             cursor: "pointer",
             transition: "all 0.15s",
+            boxShadow: mode === "promos" ? "0 0 20px rgba(0,212,255,0.3)" : "none",
           }}
         >
           Акции
@@ -1231,8 +1275,8 @@ export default function GdeSkidkaPrototype() {
         ))}
       </div>
 
-      {/* ========== Яндекс.Карты (адаптивная) ========== */}
-      <div style={{ width: '100%', height: '50vh', minHeight: '300px', maxHeight: '600px', background: '#e8edeb' }}>
+      {/* ========== Яндекс.Карты ========== */}
+      <div style={{ width: '100%', height: '50vh', minHeight: '300px', maxHeight: '600px', background: '#0F131F', border: `1px solid ${C.line}`, borderRadius: 12, overflow: 'hidden', margin: '8px 0' }}>
         <YMaps query={{ apikey: import.meta.env.VITE_YANDEX_MAPS_API_KEY }}>
           <Map
             state={{ center: [58.010, 56.250], zoom: 12 }}
@@ -1245,10 +1289,11 @@ export default function GdeSkidkaPrototype() {
                 geometry={[p.lat, p.lng]}
                 onClick={() => setSelectedId(p.id)}
                 properties={{
-                  balloonContent: `<strong>${p.name}</strong><br/>${p.address}`
+                  balloonContent: `<div style="color:#000"><strong>${p.name}</strong><br/>${p.address}</div>`
                 }}
                 options={{
-                  preset: 'islands#blueIcon'
+                  preset: 'islands#blueCircleDotIconWithCaption',
+                  iconColor: '#00D4FF'
                 }}
               />
             ))}
@@ -1266,7 +1311,7 @@ export default function GdeSkidkaPrototype() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Sparkles size={16} color={C.amber} />
+          <Sparkles size={16} color={C.brand} style={{ filter: "drop-shadow(0 0 6px #00D4FF)" }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>
             {helped} отметок помогли соседям
           </span>
@@ -1281,6 +1326,7 @@ export default function GdeSkidkaPrototype() {
             fontSize: 13,
             cursor: "pointer",
             fontFamily: "Manrope, sans-serif",
+            textShadow: "0 0 10px rgba(0,212,255,0.2)",
           }}
         >
           {listExpanded ? "Свернуть" : "Развернуть"}
@@ -1312,7 +1358,8 @@ export default function GdeSkidkaPrototype() {
                 cursor: "pointer",
                 textAlign: "left",
                 width: "100%",
-                transition: "border 0.15s",
+                transition: "border 0.15s, box-shadow 0.15s",
+                boxShadow: selectedId === p.id ? "0 0 20px rgba(0,212,255,0.15)" : "none",
               }}
             >
               <div
@@ -1322,6 +1369,7 @@ export default function GdeSkidkaPrototype() {
                   borderRadius: "50%",
                   background: TONE_HEX[pinTone(p, mode, category, cityPoints)] || C.grey,
                   flexShrink: 0,
+                  boxShadow: "0 0 10px rgba(0,212,255,0.2)",
                 }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -1344,15 +1392,15 @@ export default function GdeSkidkaPrototype() {
           bottom: 28,
           right: 28,
           background: C.brand,
-          color: "#fff",
+          color: "#000",
           border: "none",
           borderRadius: 60,
           padding: "16px 24px",
           fontFamily: "Unbounded, sans-serif",
-          fontWeight: 600,
+          fontWeight: 700,
           fontSize: 15,
           cursor: "pointer",
-          boxShadow: "0 6px 28px rgba(47,110,82,0.35)",
+          boxShadow: "0 0 30px rgba(0,212,255,0.4)",
           display: "flex",
           alignItems: "center",
           gap: 10,
@@ -1361,11 +1409,11 @@ export default function GdeSkidkaPrototype() {
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "scale(1.04)";
-          e.currentTarget.style.boxShadow = "0 10px 32px rgba(47,110,82,0.4)";
+          e.currentTarget.style.boxShadow = "0 0 50px rgba(0,212,255,0.6)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.boxShadow = "0 6px 28px rgba(47,110,82,0.35)";
+          e.currentTarget.style.boxShadow = "0 0 30px rgba(0,212,255,0.4)";
         }}
       >
         <Plus size={22} /> Добавить
@@ -1379,13 +1427,14 @@ export default function GdeSkidkaPrototype() {
             bottom: 100,
             left: "50%",
             transform: "translateX(-50%)",
-            background: C.ink,
-            color: "#fff",
+            background: C.surface,
+            color: C.ink,
             padding: "12px 24px",
             borderRadius: 30,
             fontSize: 14,
             fontWeight: 600,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+            boxShadow: "0 0 40px rgba(0,212,255,0.2)",
+            border: `1px solid ${C.brand}`,
             zIndex: 60,
             whiteSpace: "nowrap",
             maxWidth: "90%",
@@ -1403,7 +1452,8 @@ export default function GdeSkidkaPrototype() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.3)",
+            background: "rgba(0,0,0,0.7)",
+            backdropFilter: "blur(6px)",
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
