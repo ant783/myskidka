@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  Plus, X, Check, Camera, ChevronDown, Share2,
+  Plus, X, Check, Camera, Share2,
   ThumbsUp, ThumbsDown, Milk, Wheat, Egg, Fuel, Droplet,
   LayoutGrid, Percent, Layers, Wallet, Tag, Minus, Sparkles
 } from 'lucide-react';
@@ -26,7 +26,7 @@ const C = {
   greySoft: "#1E2638",
 };
 
-// ---------------------------------- data ----------------------------------
+// ---------------------------------- Категории ----------------------------------
 const PRICE_CATS = [
   { id: "all", label: "Все товары", icon: LayoutGrid, unit: "" },
   { id: "milk", label: "Молоко", icon: Milk, unit: "л" },
@@ -46,7 +46,8 @@ const PROMO_CATS = [
 
 const TYPE_LABEL = { shop: "Магазин", gas: "АЗС", cafe: "Кафе" };
 
-const PERM_CITY_POINTS = [
+// ----- Только Пермь, только Пятёрочка -----
+const PERM_PYATEROCHKA_POINTS = [
   {
     id: 1,
     name: "Пятёрочка на Компросе",
@@ -66,8 +67,8 @@ const PERM_CITY_POINTS = [
   },
   {
     id: 2,
-    name: "Семья на Ленина",
-    brand: "Семья",
+    name: "Пятёрочка на Ленина",
+    brand: "Пятёрочка",
     type: "shop",
     address: "ул. Ленина, 15",
     lat: 58.017,
@@ -81,154 +82,8 @@ const PERM_CITY_POINTS = [
       { id: "m2", cat: "cashback", title: "Кэшбэк 10% картой «Семья»", value: "+10%", until: "до 30 сент.", mins: 70, confirms: 9, status: "active" },
     ],
   },
-  {
-    id: 3,
-    name: "АЗС Лукойл",
-    brand: "Лукойл",
-    type: "gas",
-    address: "Шоссе Космонавтов, 100",
-    lat: 58.035,
-    lng: 56.275,
-    prices: [
-      { id: "p7", cat: "fuel", value: 58.9, unit: "л", mins: 5, confirms: 11, status: "active" },
-    ],
-    promos: [],
-  },
-  {
-    id: 4,
-    name: "Виват на Куйбышева",
-    brand: "Виват",
-    type: "shop",
-    address: "ул. Куйбышева, 95",
-    lat: 58.009,
-    lng: 56.220,
-    prices: [
-      { id: "p8", cat: "milk", value: 84, unit: "л", mins: 8, confirms: 8, status: "active" },
-      { id: "p9", cat: "bread", value: 38, unit: "шт", mins: 15, confirms: 5, status: "active" },
-      { id: "p10", cat: "water", value: 34, unit: "1.5л", mins: 90, confirms: 3, status: "active" },
-    ],
-    promos: [
-      { id: "m3", cat: "sale", title: "Распродажа консервации −30%", value: "−30%", until: "до 10 сент.", mins: 18, confirms: 6, status: "active" },
-    ],
-  },
-  {
-    id: 5,
-    name: "АЗС Газпромнефть",
-    brand: "Газпромнефть",
-    type: "gas",
-    address: "ул. Героев Хасана, 105",
-    lat: 58.027,
-    lng: 56.280,
-    prices: [
-      { id: "p11", cat: "fuel", value: 60.4, unit: "л", mins: 33, confirms: 5, status: "active" },
-    ],
-    promos: [],
-  },
-  {
-    id: 6,
-    name: "Кофейня у ЦУМа",
-    brand: "Кафе",
-    type: "cafe",
-    address: "ул. Ленина, 45",
-    lat: 58.013,
-    lng: 56.245,
-    prices: [],
-    promos: [
-      { id: "m4", cat: "twoforone", title: "2 кофе по цене одного до 12:00", value: "2=1", until: "сегодня", mins: 9, confirms: 4, status: "active" },
-    ],
-  },
-  {
-    id: 7,
-    name: "Добрыня на Крисанова",
-    brand: "Добрыня",
-    type: "shop",
-    address: "ул. Крисанова, 12",
-    lat: 58.022,
-    lng: 56.267,
-    prices: [
-      { id: "p12", cat: "milk", value: 93, unit: "л", mins: 320, confirms: 1, status: "active" },
-      { id: "p13", cat: "bread", value: 45, unit: "шт", mins: 260, confirms: 1, status: "active" },
-    ],
-    promos: [],
-  },
+  // Добавьте сюда другие Пятёрочки, если есть реальные данные
 ];
-
-const PERM_KRAI_POINTS = [
-  {
-    id: 101,
-    name: "Магнит в Краснокамске",
-    brand: "Магнит",
-    type: "shop",
-    address: "г. Краснокамск, ул. Победы, 3",
-    lat: 58.082,
-    lng: 55.755,
-    prices: [
-      { id: "k1", cat: "milk", value: 90, unit: "л", mins: 40, confirms: 4, status: "active" },
-      { id: "k2", cat: "bread", value: 42, unit: "шт", mins: 100, confirms: 2, status: "active" },
-    ],
-    promos: [],
-  },
-  {
-    id: 102,
-    name: "АЗС Лукойл — трасса Пермь–Березники",
-    brand: "Лукойл",
-    type: "gas",
-    address: "а/д Пермь–Березники, 48 км",
-    lat: 58.150,
-    lng: 56.000,
-    prices: [
-      { id: "k3", cat: "fuel", value: 59.5, unit: "л", mins: 20, confirms: 7, status: "active" },
-    ],
-    promos: [],
-  },
-  {
-    id: 103,
-    name: "Пятёрочка в Чайковском",
-    brand: "Пятёрочка",
-    type: "shop",
-    address: "г. Чайковский, ул. Ленина, 22",
-    lat: 56.778,
-    lng: 54.114,
-    prices: [
-      { id: "k4", cat: "milk", value: 87, unit: "л", mins: 15, confirms: 5, status: "active" },
-    ],
-    promos: [
-      { id: "k5m", cat: "percent", title: "Скидка 15% на хлеб", value: "−15%", until: "до 9 сент.", mins: 30, confirms: 3, status: "active" },
-    ],
-  },
-  {
-    id: 104,
-    name: "Магазин «Кунгурский»",
-    brand: "Кунгурский",
-    type: "shop",
-    address: "г. Кунгур, ул. Свободы, 8",
-    lat: 57.428,
-    lng: 56.959,
-    prices: [
-      { id: "k6", cat: "eggs", value: 110, unit: "10 шт", mins: 200, confirms: 2, status: "active" },
-    ],
-    promos: [],
-  },
-  {
-    id: 105,
-    name: "АЗС Роснефть — трасса Пермь–Кунгур",
-    brand: "Роснефть",
-    type: "gas",
-    address: "а/д Пермь–Кунгур, 15 км",
-    lat: 57.850,
-    lng: 56.500,
-    prices: [
-      { id: "k7", cat: "fuel", value: 60.9, unit: "л", mins: 60, confirms: 4, status: "active" },
-    ],
-    promos: [],
-  },
-];
-
-const CITIES = ["Пермь", "Пермский край"];
-const DATASET_BY_CITY = {
-  "Пермь": PERM_CITY_POINTS,
-  "Пермский край": PERM_KRAI_POINTS,
-};
 
 // ---------------------------------- helpers ----------------------------------
 function timeAgo(mins) {
@@ -253,15 +108,15 @@ function catLabel(list, id) {
   return found ? found.label : id;
 }
 
-function avgPriceFor(cityPoints, cat) {
-  const all = cityPoints.flatMap((p) =>
+function avgPriceFor(points, cat) {
+  const all = points.flatMap((p) =>
     p.prices.filter((x) => x.cat === cat).map((x) => x.value)
   );
   if (all.length === 0) return 0;
   return all.reduce((a, b) => a + b, 0) / all.length;
 }
 
-function pinTone(point, mode, category, cityPoints) {
+function pinTone(point, mode, category, points) {
   if (mode === "prices") {
     const entries = point.prices.filter(
       (p) => p.status === "active" && (category === "all" || p.cat === category)
@@ -270,11 +125,11 @@ function pinTone(point, mode, category, cityPoints) {
     const stalest = Math.min(...entries.map((e) => e.mins));
     if (stalest > 180) return "grey";
     const cheapest = entries.some(
-      (e) => e.mins <= 180 && e.value <= avgPriceFor(cityPoints, e.cat) * 0.97
+      (e) => e.mins <= 180 && e.value <= avgPriceFor(points, e.cat) * 0.97
     );
     if (cheapest) return "brand";
     const pricey = entries.every(
-      (e) => e.value >= avgPriceFor(cityPoints, e.cat) * 1.03
+      (e) => e.value >= avgPriceFor(points, e.cat) * 1.03
     );
     if (pricey) return "coral";
     return "amber";
@@ -296,7 +151,7 @@ const TONE_HEX = {
   grey: C.grey,
 };
 
-// ---------------------------------- components ----------------------------------
+// ---------------------------------- компоненты ----------------------------------
 function IconCircleButton({ onClick, children, size = 38, title }) {
   return (
     <button
@@ -979,9 +834,7 @@ function AddMarkModal({ mode, points, pointId, onClose, onSubmit }) {
 export default function GdeSkidkaPrototype() {
   const [mode, setMode] = useState("prices");
   const [category, setCategory] = useState("all");
-  const [city, setCity] = useState("Пермь");
-  const [cityOpen, setCityOpen] = useState(false);
-  const [pointsByCity, setPointsByCity] = useState(DATASET_BY_CITY);
+  const [points, setPoints] = useState(PERM_PYATEROCHKA_POINTS);
   const [selectedId, setSelectedId] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addPointId, setAddPointId] = useState(null);
@@ -990,11 +843,6 @@ export default function GdeSkidkaPrototype() {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
-  useEffect(() => {
-    setCategory("all");
-    setSelectedId(null);
-  }, [mode, city]);
-
   function showToast(text) {
     setToast(text);
     clearTimeout(toastTimer.current);
@@ -1002,20 +850,16 @@ export default function GdeSkidkaPrototype() {
   }
 
   const cats = mode === "prices" ? PRICE_CATS : PROMO_CATS;
-  const cityPoints = pointsByCity[city];
-  const visiblePoints = cityPoints.filter(
-    (p) => pinTone(p, mode, category, cityPoints) !== null
+  const visiblePoints = points.filter(
+    (p) => pinTone(p, mode, category, points) !== null
   );
 
-  function updateCityPoints(updater) {
-    setPointsByCity((prev) => ({
-      ...prev,
-      [city]: updater(prev[city]),
-    }));
+  function updatePoints(updater) {
+    setPoints(updater);
   }
 
   function handleConfirm(pointId, kind, itemId) {
-    updateCityPoints((prev) =>
+    updatePoints((prev) =>
       prev.map((p) => {
         if (p.id !== pointId) return p;
         return {
@@ -1031,7 +875,7 @@ export default function GdeSkidkaPrototype() {
   }
 
   function handleReport(pointId, kind, itemId) {
-    updateCityPoints((prev) =>
+    updatePoints((prev) =>
       prev.map((p) => {
         if (p.id !== pointId) return p;
         return {
@@ -1057,7 +901,7 @@ export default function GdeSkidkaPrototype() {
   }
 
   function handleSubmitMark(pointId, payload) {
-    updateCityPoints((prev) =>
+    updatePoints((prev) =>
       prev.map((p) =>
         p.id === pointId
           ? { ...p, [payload.type]: [payload.entry, ...p[payload.type]] }
@@ -1074,7 +918,7 @@ export default function GdeSkidkaPrototype() {
     setSelectedId(pointId);
   }
 
-  const selectedPoint = cityPoints.find((p) => p.id === selectedId) || null;
+  const selectedPoint = points.find((p) => p.id === selectedId) || null;
 
   return (
     <div
@@ -1129,74 +973,10 @@ export default function GdeSkidkaPrototype() {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button
-            onClick={() => setCityOpen(!cityOpen)}
-            style={{
-              background: C.greySoft,
-              border: `1px solid ${C.line}`,
-              borderRadius: 30,
-              padding: "6px 14px",
-              fontFamily: "Manrope, sans-serif",
-              fontWeight: 600,
-              fontSize: 12,
-              color: C.ink,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-            }}
-          >
-            {city} <ChevronDown size={14} />
-          </button>
-          {cityOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: 60,
-                right: 20,
-                background: C.surface,
-                borderRadius: 16,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.8)",
-                border: `1px solid ${C.line}`,
-                padding: 8,
-                zIndex: 30,
-                minWidth: 140,
-              }}
-            >
-              {CITIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => {
-                    setCity(c);
-                    setCityOpen(false);
-                  }}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "8px 14px",
-                    textAlign: "left",
-                    background: "transparent",
-                    border: "none",
-                    borderRadius: 10,
-                    fontFamily: "Manrope, sans-serif",
-                    fontWeight: c === city ? 700 : 500,
-                    fontSize: 14,
-                    color: c === city ? C.brand : C.ink,
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = C.greySoft)}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          )}
-          <IconCircleButton
-            onClick={() => {}}
-            title="Поделиться"
-            size={36}
-          >
+          <span style={{ color: C.inkSoft, fontSize: 12, background: C.greySoft, padding: "4px 12px", borderRadius: 30 }}>
+            Пермь
+          </span>
+          <IconCircleButton onClick={() => {}} title="Поделиться" size={36}>
             <Share2 size={18} />
           </IconCircleButton>
         </div>
@@ -1275,9 +1055,9 @@ export default function GdeSkidkaPrototype() {
         ))}
       </div>
 
-      {/* ========== Яндекс.Карты ========== */}
+      {/* Карта */}
       <div style={{ width: '100%', height: '50vh', minHeight: '300px', maxHeight: '600px', background: '#0F131F', border: `1px solid ${C.line}`, borderRadius: 12, overflow: 'hidden', margin: '8px 0' }}>
-        <YMaps query={{ apikey: import.meta.env.VITE_YANDEX_MAPS_API_KEY }}>
+        <YMaps query={{ apikey: import.meta.env.VITE_YANDEX_MAPS_API_KEY || 'ваш_ключ_заглушка' }}>
           <Map
             state={{ center: [58.010, 56.250], zoom: 12 }}
             width="100%"
@@ -1367,7 +1147,7 @@ export default function GdeSkidkaPrototype() {
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  background: TONE_HEX[pinTone(p, mode, category, cityPoints)] || C.grey,
+                  background: TONE_HEX[pinTone(p, mode, category, points)] || C.grey,
                   flexShrink: 0,
                   boxShadow: "0 0 10px rgba(0,212,255,0.2)",
                 }}
@@ -1476,7 +1256,7 @@ export default function GdeSkidkaPrototype() {
       {addOpen && (
         <AddMarkModal
           mode={mode}
-          points={cityPoints}
+          points={points}
           pointId={addPointId}
           onClose={() => setAddOpen(false)}
           onSubmit={handleSubmitMark}
