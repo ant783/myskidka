@@ -30,7 +30,10 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps   # <-- добавлен флаг
+        run: npm install --legacy-peer-deps
+
+      - name: Clean Vite cache
+        run: rm -rf node_modules/.vite
 
       - name: Build project
         run: npm run build
