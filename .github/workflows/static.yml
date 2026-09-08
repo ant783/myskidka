@@ -23,18 +23,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5   # обновлено с v4
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5   # обновлено с v4
+        uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install   # используем npm install вместо npm ci
+        run: npm install
 
       - name: Build project
         run: npm run build
+
+      # Отладочный шаг: выводим содержимое dist (даже если сборка упала)
+      - name: List dist contents (debug)
+        if: always()
+        run: ls -la dist || echo "dist folder not found"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -47,4 +55,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
